@@ -3,6 +3,12 @@ const path = require("path");
 
 const appDir = path.dirname(require.main.filename);
 
+/**
+ * 
+ * @param {string} dir - relative path to search through
+ * @param {string} ext - extension (e.g. .js) to search for
+ * @returns list of files in the directory and all subfolders matching ext
+ */
 module.exports = function crawl(dir, ext) {
   let fileList = [];
 
