@@ -4,6 +4,6 @@ module.exports = {
   guildOnly: true,
   cooldown: 1,
   execute(message, args) {
-    message.channel.send("Pong.");
+    message.channel.send("Pong!");
   },
 };
