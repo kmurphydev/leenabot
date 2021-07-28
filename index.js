@@ -45,6 +45,21 @@ client.on("message", (message) => {
 
   if (!command) return;
 
+ //check if command can only be used in/outside of DMs
+ if (command.guildOnly && message.channel.type === "dm") {
+  return message.reply(`I can't do that inside DMs! Sorry!`);
+}
+if (command.dmOnly && message.channel.type !== "dm") {
+  return message.reply(`Sorry! Keep that kind of command to the DMs...`);
+}
+
+  if (command.permissions) {
+    const authorPerms = message.channel.permissionsFor(message.author);
+    if (!authorPerms || !authorPerms.has(command.permissions)) {
+      return message.reply(`You don't have permissions to use this command!`);
+    }
+  }
+
   //   console.log(`args length:${args.length}`);
 
   //check for arguments if required
@@ -57,13 +72,7 @@ client.on("message", (message) => {
     return message.reply(reply);
   }
 
-  //check if command can only be used in/outside of DMs
-  if (command.guildOnly && message.channel.type === "dm") {
-    return message.reply(`I can't do that inside DMs! Sorry!`);
-  }
-  if (command.dmOnly && message.channel.type !== "dm") {
-    return message.reply(`Sorry! Keep that kind of command to the DMs...`);
-  }
+ 
 
   const now = Date.now();
   const timestamps = cooldowns.get(command.name);
