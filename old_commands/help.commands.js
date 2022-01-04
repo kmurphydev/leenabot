@@ -8,7 +8,7 @@ module.exports = {
   cooldown: 5,
   execute(message, args) {
     const data = [];
-    const { commands } = message.client;
+    const commands = message.client.message_commands;
 
     if (!args.length) {
       data.push(`Here's a list of all my commands:`);
@@ -53,7 +53,7 @@ module.exports = {
     if (command.usage)
       data.push(`**Usage:** ${prefix}${command.name} ${command.usage}`);
     if (command.permissions)
-        data.push(`**Required Permissions:** ${command.permissions}`);
+      data.push(`**Required Permissions:** ${command.permissions}`);
 
     data.push(`**Cooldown:** ${command.cooldown || 3} second(s)`);
 
