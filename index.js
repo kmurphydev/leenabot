@@ -1,6 +1,19 @@
-const Discord = require("discord.js");
-const { token, prefix, defaultCooldown } = require("./config.json");
+const { Client, Intents, Collection } = require("discord.js");
+// const { REST } = require("@discordjs/rest");
+// const {Routes} = require("discord-api-types");
+
+const dotenv = require('dotenv');
+dotenv.config();
+const { prefix } = require("./config.json");
+
+
 const findCommand = require("./helper-functions/find-command.helper");
+
+const { token } = process.env;
+
+
+// const rest = new REST({ version: '9' }).setToken(token);
+
 
 //helper functions
 const dirWalk = require("./helper-functions/dir-walk.helper");
@@ -10,10 +23,12 @@ const commandFiles = dirWalk("./commands", ".commands.js");
 // console.log(`COMMANDS FOUND IN DIRECTORIES:${commandFiles}`);
 
 //initialize client and give it commands, cooldowns collections
-const client = new Discord.Client();
+const client = new Client({
+  intents: [Intents.FLAGS.GUILDS]
+});
 
-client.commands = new Discord.Collection();
-client.cooldowns = new Discord.Collection();
+client.commands = new Collection();
+client.cooldowns = new Collection();
 const { cooldowns } = client;
 
 //add all command functions from commandFiles to the commands collection
@@ -22,7 +37,7 @@ for (const file of commandFiles) {
   client.commands.set(command.name, command);
 
   //initialize a cooldown collection for each command
-  cooldowns.set(command.name, new Discord.Collection());
+  cooldowns.set(command.name, new Collection());
 }
 // console.log(`COMMANDS: ${Array.from(client.commands)}`);
 
@@ -45,13 +60,13 @@ client.on("message", (message) => {
 
   if (!command) return;
 
- //check if command can only be used in/outside of DMs
- if (command.guildOnly && message.channel.type === "dm") {
-  return message.reply(`I can't do that inside DMs! Sorry!`);
-}
-if (command.dmOnly && message.channel.type !== "dm") {
-  return message.reply(`Sorry! Keep that kind of command to the DMs...`);
-}
+  //check if command can only be used in/outside of DMs
+  if (command.guildOnly && message.channel.type === "dm") {
+    return message.reply(`I can't do that inside DMs! Sorry!`);
+  }
+  if (command.dmOnly && message.channel.type !== "dm") {
+    return message.reply(`Sorry! Keep that kind of command to the DMs...`);
+  }
 
   if (command.permissions) {
     const authorPerms = message.channel.permissionsFor(message.author);
@@ -72,7 +87,7 @@ if (command.dmOnly && message.channel.type !== "dm") {
     return message.reply(reply);
   }
 
- 
+
 
   const now = Date.now();
   const timestamps = cooldowns.get(command.name);
