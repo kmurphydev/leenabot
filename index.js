@@ -5,7 +5,7 @@ dotenv.config();
 const { token } = process.env;
 
 const { createConnection } = require('typeorm');
-const { Reminder } = require('./entity/Reminder.js');
+const { handleReminder, injectClient } = require("./handle-reminders.js");
 
 //helper functions
 const dirWalk = require("./helper-functions/dir-walk.helper");
@@ -17,10 +17,10 @@ const commandFiles = dirWalk("./commands", ".commands.js");
 
 (async () => {
 
-  //initialize client and give it commands, cooldowns collections
   const client = new Client({
     intents: [Intents.FLAGS.GUILDS]
   });
+  //initialize client and give it commands, cooldowns collections
 
   client.commands = new Collection();
   //add all command functions from commandFiles to the commands collection
@@ -32,12 +32,22 @@ const commandFiles = dirWalk("./commands", ".commands.js");
 
   //connect to PG db
 
+
   await createConnection();
+
+  // const testReminder = new Reminder();
+  // testReminder.discord_id = 1234;
+  // testReminder.remind_text = 'asdf';
+
 
   //set up listeners
 
   client.once("ready", () => {
     console.log("Ready!");
+    // console.log('client in index.js');
+    // console.log(client);
+    injectClient(client);
+    handleReminder();
   });
 
   //slash command interpreter

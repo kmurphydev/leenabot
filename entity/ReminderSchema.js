@@ -1,8 +1,10 @@
-const { BaseEntity } = require('typeorm');
+const { EntitySchema } = require('typeorm');
+const { Reminder } = require('../model/Reminder');
 
-module.exports = new BaseEntity({
+module.exports = new EntitySchema({
     name: 'Reminder',
-    tableName: 'reminders',
+    // tableName: 'reminders',
+    target: Reminder,
     columns: {
         id: {
             primary: true,

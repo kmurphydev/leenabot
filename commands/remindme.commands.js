@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { MessageEmbed, MessageActionRow, MessageButton } = require('discord.js');
-const Reminder = require('../entity/Reminder');
+const { addReminder } = require('../handle-reminders');
 // const { MessageActionRow, MessageSelectMenu } = require('discord.js');
 
 module.exports = {
@@ -44,7 +44,7 @@ module.exports = {
         const date_options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         const time_string = reminder_date.toLocaleTimeString('en-US');
         const date_string = reminder_date.toLocaleDateString('en-US', date_options);
-        const datetime_string = time_string + ' on ' + date_string;
+        // const datetime_string = time_string + ' on ' + date_string;
 
 
         const exampleEmbed = new MessageEmbed()
@@ -94,6 +94,7 @@ module.exports = {
                         selectedFlag = true;
                         await interaction.editReply({ components: [] });
                         await interaction.followUp({ content: 'Reminder set! See you soon.', ephemeral: true });
+                        addReminder(interaction.user.id, reminder_date.getTime(), reminder_text, interaction.client);
                     } else if (i.customId === 'cancel_reminder') {
                         selectedFlag = true;
                         await interaction.editReply({ components: [] });
