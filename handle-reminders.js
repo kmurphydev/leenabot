@@ -27,7 +27,7 @@ exports.addReminder = async function (discord_id, remind_time, remind_text) {
 exports.injectClient = function (injectedClient) {
     console.log('injecting client')
     client = injectedClient;
-    console.log(client);
+    // console.log(client);
 }
 
 const handleReminder = async function () {
@@ -45,7 +45,12 @@ const handleReminder = async function () {
             id: 'DESC'
         }
     });
-    console.log(soonestReminder);
+    if (soonestReminder) {
+        console.log('found reminder: queueing')
+        console.log(soonestReminder);
+    } else {
+        console.log('no reminders in queue');
+    }
 
     if (!soonestReminder) return;
     timeoutId = setTimeout(async () => {
