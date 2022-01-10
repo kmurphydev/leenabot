@@ -7,34 +7,38 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('remindme')
         .setDescription('Initiates a dialogue to send you a reminder via DM')
-        .addNumberOption(option =>
-            option.setName('duration')
-                .setDescription('how long to wait until you are reminded')
-                .setRequired(true)
-        )
-        .addNumberOption(option =>
-            option.setName('duration_units')
-                .setDescription('units of time for your duration')
-                .setChoices([
-                    [
-                        'minutes',
-                        60 * 1000
-                    ],
-                    [
-                        'hours',
-                        60 * 60 * 1000
-                    ],
-                    [
-                        'days',
-                        24 * 60 * 60 * 1000
-                    ]
-                ])
-                .setRequired(true)
-        )
-        .addStringOption(option =>
-            option.setName('reminder_message')
-                .setDescription('message to be sent as a reminder')
-                .setRequired(true))
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('time')
+                .setDescription('Schedule a reminder by time from present')
+                .addNumberOption(option =>
+                    option.setName('duration')
+                        .setDescription('how long to wait until you are reminded')
+                        .setRequired(true)
+                )
+                .addNumberOption(option =>
+                    option.setName('duration_units')
+                        .setDescription('units of time for your duration')
+                        .setChoices([
+                            [
+                                'minutes',
+                                60 * 1000
+                            ],
+                            [
+                                'hours',
+                                60 * 60 * 1000
+                            ],
+                            [
+                                'days',
+                                24 * 60 * 60 * 1000
+                            ]
+                        ])
+                        .setRequired(true)
+                )
+                .addStringOption(option =>
+                    option.setName('reminder_message')
+                        .setDescription('message to be sent as a reminder')
+                        .setRequired(true)))
     ,
     async execute(interaction) {
         const reminder_text = interaction.options.getString('reminder_message');
