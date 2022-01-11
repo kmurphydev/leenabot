@@ -67,7 +67,7 @@ const commandFiles = dirWalk("./commands", ".commands.js");
 
     } catch (e) {
       console.error(e);
-      await interaction.reply({ content: 'there was an error. could not execute your command' });
+      await interaction.reply({ content: 'There was an error and your command could not be executed. Reason: ' + e, ephemeral: true });
     }
   });
 
