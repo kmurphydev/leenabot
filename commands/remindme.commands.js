@@ -39,12 +39,153 @@ module.exports = {
                     option.setName('reminder_message')
                         .setDescription('message to be sent as a reminder')
                         .setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('date')
+                .setDescription('Schedule a reminder by absolute date. Only schedules at most one year in advance')
+                .addNumberOption(option =>
+                    option.setName('month')
+                        .setDescription('Month to send a reminder in')
+                        .setRequired(true)
+                        .setChoices([
+                            [
+                                'January',
+                                1
+                            ],
+                            [
+                                'February',
+                                2
+                            ],
+                            [
+                                'March',
+                                3
+                            ],
+                            [
+                                'April',
+                                4
+                            ],
+                            [
+                                'May',
+                                5
+                            ],
+                            [
+                                'June',
+                                6
+                            ],
+                            [
+                                'July',
+                                7
+                            ],
+                            [
+                                'August',
+                                8
+                            ],
+                            [
+                                'September',
+                                9
+                            ],
+                            [
+                                'October',
+                                10
+                            ],
+                            [
+                                'November',
+                                11
+                            ],
+                            [
+                                'December',
+                                12
+                            ]
+                        ]))
+                .addNumberOption(option =>
+                    option.setName('date')
+                        .setDescription('Date of the month to send your reminder')
+                        .setRequired(true)
+                        .setMinValue(1)
+                        .setMaxValue(31))
+                .addStringOption(option =>
+                    option.setName('time')
+                        .setDescription('Time of day to send your reminder in HH:MM format (24 hour clock or 12 hour + AM/PM)')
+                        .setRequired(true))
+                .addStringOption(option =>
+                    option.setName('reminder_message')
+                        .setDescription('message to be sent as a reminder')
+                        .setRequired(true))
+
+        )
     ,
     async execute(interaction) {
         const reminder_text = interaction.options.getString('reminder_message');
-        const reminder_time = interaction.options.getNumber('duration') * interaction.options.getNumber('duration_units');
 
-        const reminder_date = new Date(Date.now() + reminder_time);
+        const subcommand = interaction.options.getSubcommand();
+        let reminder_date;
+        switch (subcommand) {
+            case 'time':
+                const reminder_time = interaction.options.getNumber('duration') * interaction.options.getNumber('duration_units');
+                reminder_date = new Date(Date.now() + reminder_time);
+                break;
+
+            case 'date':
+                //input validation
+                //validate date based on month
+                const month = interaction.options.getNumber('month') - 1;
+                const date = interaction.options.getNumber('date');
+                if (month === 2) {
+                    if (date > 28) {
+                        throw new Error('Feburary only has 28 days. Please enter a date between 1 and 28 (inclusive)');
+                    }
+                } else if (month === 4 || month === 6 || month === 9 || month === 11) {
+                    if (date > 30) {
+                        throw new Error('The month you picked only has 30 days. Please enter a date between 1 nad 30 (inclusive)');
+                    }
+                }
+
+                //validate time
+                let hour;
+                let minute;
+                const timeOption = interaction.options.getString('time');
+                if (timeOption) {
+                    const timeRegex = /\b([01]?[0-9]|2[0-3]):([0-5][0-9])/;
+                    const PMRegex = /([Pp][Mm])\b/;
+                    const time = timeRegex.exec(timeOption);
+                    const PM = PMRegex.exec(timeOption);
+                    if (!time || time === undefined) {
+                        throw new Error('You did not enter a valid time. Time should be in the format HH:MM where HH is between 00 and 23, and MM is between 00 and 59. Alternatively, HH:MM am or HH:MM pm (case insensitive) provided HH is not greater than 12.');
+                    }
+                    hour = parseInt(time[1]);
+                    if (PM) {
+                        if (hour > 12) {
+                            throw new Error('You cannot enter a 24 hour time (HH > 12 in HH:MM format) and AM/PM. Please only do one or the other.');
+                        }
+                        hour += 12;
+                    }
+                    minute = parseInt(time[2]);
+                    console.log('time' + time);
+                }
+                else {
+                    hour = 0;
+                    minute = 0;
+                }
+                console.log('timeoption' + timeOption);
+                console.log('hour' + hour);
+                console.log('minute' + minute);
+                //build date object
+                const now = new Date(Date.now());
+                reminder_date = new Date();
+                reminder_date.setFullYear(now.getFullYear());
+                reminder_date.setMonth(month);
+                reminder_date.setDate(date);
+                reminder_date.setHours(hour);
+                reminder_date.setMinutes(minute);
+                reminder_date.setSeconds(0);
+
+                if (now > reminder_date) {
+                    reminder_date.setFullYear(now.getFullYear() + 1);
+                }
+                console.log('reminder_date' + reminder_date);
+                break;
+        }
+
         const date_options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         const time_string = reminder_date.toLocaleTimeString('en-US');
         const date_string = reminder_date.toLocaleDateString('en-US', date_options);
