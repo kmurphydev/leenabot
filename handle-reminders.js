@@ -1,6 +1,6 @@
 // const { client } = require('./index');
 const { Reminder } = require('./model/Reminder');
-
+const { MessageEmbed } = require('discord.js');
 var client;
 var timeoutId;
 var soonestReminder;
@@ -56,9 +56,12 @@ const handleReminder = async function () {
     timeoutId = setTimeout(async () => {
         //dm user
         const user = await client.users.fetch(soonestReminder.discord_id);
+        const embed = new MessageEmbed()
+            .setColor('#0099ff')
+            .setTitle(soonestReminder.remind_text)
+            .setDescription('(this reminder was requested by you using /remindme)');
         await user.send({
-            content: soonestReminder.remind_text + '(this reminder was requested by you using the /remindme command)'
-
+            embeds: [embed]
         });
         // console.log(soonestReminder.discord_id);
         await soonestReminder.remove();
