@@ -147,8 +147,11 @@ module.exports = {
                 if (timeOption) {
                     const timeRegex = /\b([01]?[0-9]|2[0-3]):([0-5][0-9])/;
                     const PMRegex = /([Pp][Mm])\b/;
+                    const AMRegex = /([Aa][Mm])\b/;
                     const time = timeRegex.exec(timeOption);
                     const PM = PMRegex.exec(timeOption);
+                    const AM = AMRegex.exec(timeOption);
+
                     if (!time || time === undefined) {
                         throw new Error('You did not enter a valid time. Time should be in the format HH:MM where HH is between 00 and 23, and MM is between 00 and 59. Alternatively, HH:MM am or HH:MM pm (case insensitive) provided HH is not greater than 12.');
                     }
@@ -157,7 +160,16 @@ module.exports = {
                         if (hour > 12) {
                             throw new Error('You cannot enter a 24 hour time (HH > 12 in HH:MM format) and AM/PM. Please only do one or the other.');
                         }
-                        hour += 12;
+                        else if (hour < 12) {
+
+                            hour += 12;
+                        }
+                    }
+                    //they specified AM
+                    if (AM) {
+                        if (hour === 12) {
+                            hour -= 12;
+                        }
                     }
                     minute = parseInt(time[2]);
                     console.log('time' + time);
