@@ -53,24 +53,33 @@ const handleReminder = async function () {
     }
 
     if (!soonestReminder) return;
-    timeoutId = setTimeout(async () => {
-        //dm user
-        const user = await client.users.fetch(soonestReminder.discord_id);
-        const embed = new MessageEmbed()
-            .setColor('#0099ff')
-            .setTitle(soonestReminder.remind_text)
-            .setDescription('(this reminder was requested by you using /remindme)');
-        await user.send({
-            embeds: [embed]
-        });
-        // console.log(soonestReminder.discord_id);
-        await soonestReminder.remove();
-        console.log('removing soonestReminder')
-        console.log(soonestReminder);
+    //check if the soonest reminder would expire past the max timeout limit
+    if (soonestReminder.remind_time - Date.now() > 2147483647) {
+        timeoutId = setTimeout(async () => {
+            //just wait the longest amount of time and load again
+            await handleReminder();
+        }, 2147483647);
+    } else {
+        //handle reminder as normal
+        timeoutId = setTimeout(async () => {
+            //dm user
+            const user = await client.users.fetch(soonestReminder.discord_id);
+            const embed = new MessageEmbed()
+                .setColor('#0099ff')
+                .setTitle(soonestReminder.remind_text)
+                .setDescription('(this reminder was requested by you using /remindme)');
+            await user.send({
+                embeds: [embed]
+            });
+            // console.log(soonestReminder.discord_id);
+            await soonestReminder.remove();
+            console.log('removing soonestReminder')
+            console.log(soonestReminder);
 
-        await handleReminder();
+            await handleReminder();
 
-    }, soonestReminder.remind_time - Date.now());
+        }, soonestReminder.remind_time - Date.now());
+    }
 }
 
 module.exports.handleReminder = handleReminder;
