@@ -104,14 +104,13 @@ module.exports = {
                         .setMinValue(1)
                         .setMaxValue(31))
                 .addStringOption(option =>
-                    option.setName('time')
-                        .setDescription('Time of day to send your reminder in HH:MM format (24 hour clock or 12 hour + AM/PM)')
-                        .setRequired(true))
-                .addStringOption(option =>
                     option.setName('reminder_message')
                         .setDescription('message to be sent as a reminder')
                         .setRequired(true))
-
+                .addStringOption(option =>
+                    option.setName('time')
+                        .setDescription('Time to send your reminder. Format is HH:MM AM/PM (24h clock or 12h + AM/PM)')
+                        .setRequired(false))
         )
     ,
     async execute(interaction) {
@@ -184,15 +183,15 @@ module.exports = {
                 //build date object
                 const now = new Date(Date.now());
                 reminder_date = new Date();
-                reminder_date.setFullYear(now.getFullYear());
-                reminder_date.setMonth(month);
-                reminder_date.setDate(date);
-                reminder_date.setHours(hour);
-                reminder_date.setMinutes(minute);
-                reminder_date.setSeconds(0);
+                reminder_date.setUTCFullYear(now.getFullYear());
+                reminder_date.setUTCMonth(month);
+                reminder_date.setUTCDate(date);
+                reminder_date.setUTCHours(hour);
+                reminder_date.setUTCMinutes(minute);
+                reminder_date.setUTCSeconds(0);
 
                 if (now > reminder_date) {
-                    reminder_date.setFullYear(now.getFullYear() + 1);
+                    reminder_date.setUTCFullYear(now.getFullYear() + 1);
                 }
                 console.log('reminder_date' + reminder_date);
                 break;
@@ -214,6 +213,7 @@ module.exports = {
             .addFields(
                 { name: 'Time', value: time_string, inline: true },
                 { name: 'Date', value: date_string, inline: true },
+                { name: 'Note about timezones', value: 'This command interprets the time based on the timezone you have set with /timezone, and otherwise defaults to UTC+0' }
             );
 
         const buttonRow = new MessageActionRow()
