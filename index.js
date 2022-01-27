@@ -1,4 +1,4 @@
-const { Client, Intents, Collection } = require("discord.js");
+const { Client, MessageEmbed, Intents, Collection } = require("discord.js");
 require('reflect-metadata');
 const dotenv = require('dotenv');
 dotenv.config();
@@ -67,7 +67,15 @@ const commandFiles = dirWalk("./commands", ".commands.js");
 
     } catch (e) {
       console.error(e);
-      await interaction.reply({ content: 'There was an error and your command could not be executed. Reason: ' + e, ephemeral: true });
+      const embed = new MessageEmbed()
+        .setColor('#0099ff')
+        .setTitle('Reason:')
+        .setDescription(e.toString());
+      await interaction.reply({
+        content: 'There was an error and your command could not be executed.',
+        embeds: [embed],
+        ephemeral: true
+      });
     }
   });
 
