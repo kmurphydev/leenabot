@@ -4,6 +4,14 @@ const { SlashCommandBuilder } = require('@discordjs/builders');
 const { User } = require('../model/User');
 const TIMEZONES = require('../constants/timezones.constants.js');
 
+function getTimezoneText(offset) {
+    const sign = (offset < 0) ? '-' : '+';
+    const leadingZero = (Math.abs(offset) < 10) ? '0' : '';
+    const hours = Math.floor(offset);
+    const minutes = ((offset - hours) * 60).toLocaleString('en-US', { minimumIntegerDigits: 2 });
+    return '(UTC' + sign + leadingZero + Math.abs(hours) + ':' + minutes + ')';
+}
+
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('timezone')
@@ -31,7 +39,9 @@ module.exports = {
     async execute(interaction) {
         console.log('executing timezone commands test callback')
         const subcommand = interaction.options.getSubcommand();
-        let timezone_offset = -600;
+
+        let timezone;
+        let timezone_text;
         switch (subcommand) {
             //input validation on option strings
             //set timezone_offset
@@ -39,28 +49,35 @@ module.exports = {
                 const offsetOption = interaction.options.getString('offset');
 
                 // const UTCRegex = /\b([Uu][Tt][Cc])/;
-                const offsetRegex = /(\+?|-)([01]?[0-9]{3})/;
+                const offsetRegex = /(\+?|-)([01]?[0-9]{1}):?([0-9]{2})/;
 
                 const offset = offsetRegex.exec(offsetOption);
                 if (!offset) {
                     throw new Error('You did not enter a recognized format for offset: examples of valid offsets include -1200, UTC+0830, +0830, UTC-0400, +945, 945')
                 }
-                let offset_val = parseInt(offset[2]);
+                // let offset_hours = parseFloat(offset[2]);
+                // let offset_minutes = parseFloat(offset[3])/60;
+                let offset_val = parseFloat(offset[2]) + parseFloat(offset[3]) / 60;
                 if (offset[1] === '-') offset_val *= -1;
-                if (offset_val > 1400 || offset_val < -1200) {
+                console.log('offset_val:' + offset_val);
+                if (offset_val > 14 || offset_val < -12) {
                     throw new Error('You did not enter a valid timezone offset value. Offset must be between -1200 and +1400');
                 }
-                timezone_offset = offset_val;
+                timezone = TIMEZONES.find(t => (t.offset === offset_val) && !t.isdst);
+                if (!timezone) {
+                    throw new Error('You did not enter an offset corresponding to a valid timezone');
+                }
+                timezone_text = getTimezoneText(timezone.offset);
                 break;
             case 'abbreviation':
                 // throw new Error('this subcommand has yet to be implemented! sorry');
                 const abbrevOption = interaction.options.getString('abbreviation');
                 // console.log(TIMEZONES);
-                const timezone = TIMEZONES.find(t => t.abbr.toLowerCase() === abbrevOption.toLowerCase());
+                timezone = TIMEZONES.find(t => t.abbr.toLowerCase() === abbrevOption.toLowerCase());
                 if (!timezone) {
                     throw new Error('You did not enter a valid timezone abbreviation.');
                 }
-                timezone_offset = timezone.offset * 100;
+                timezone_text = timezone.text;
 
                 break;
         }
@@ -73,19 +90,15 @@ module.exports = {
             user = new User();
             user.discord_id = discord_id;
         }
-        user.timezone_offset = timezone_offset;
+        user.timezone_offset = timezone.offset;
+        user.timezone_string = timezone_text;
         await user.save().then((u) => {
             console.log('saved user successfully')
             console.log(u);
         });
-
-        const abs_offset = Math.abs(timezone_offset);
-        let offsetString = `${(timezone_offset > 0) ? '+' : '-'}${(abs_offset < 1000) ? '0' : ''}${abs_offset.toString()}`;
-        console.log('offset string: ' + offsetString);
-
         await interaction.reply(
             {
-                content: 'Your timezone has been set to UTC' + offsetString,
+                content: 'Your timezone has been set to ' + timezone_text,
                 ephemeral: true
             });
         //set timezone_offset for the user

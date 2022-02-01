@@ -15,6 +15,10 @@ module.exports = new EntitySchema({
         },
         timezone_offset: {
             type: 'int'
+        },
+        timezone_string: {
+            type: 'text',
+            default: '(UTC+0:00)'
         }
     }
 })
