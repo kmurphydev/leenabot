@@ -1,7 +1,8 @@
-const { SlashCommandBuilder, time } = require('@discordjs/builders');
+const { SlashCommandBuilder } = require('@discordjs/builders');
 // const { MessageEmbed, MessageActionRow, MessageButton } = require('discord.js');
 // const { MessageActionRow, MessageSelectMenu } = require('discord.js');
 const { User } = require('../model/User');
+const TIMEZONES = require('../constants/timezones.constants.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -52,7 +53,15 @@ module.exports = {
                 timezone_offset = offset_val;
                 break;
             case 'abbreviation':
-                throw new Error('this subcommand has yet to be implemented! sorry');
+                // throw new Error('this subcommand has yet to be implemented! sorry');
+                const abbrevOption = interaction.options.getString('abbreviation');
+                // console.log(TIMEZONES);
+                const timezone = TIMEZONES.find(t => t.abbr.toLowerCase() === abbrevOption.toLowerCase());
+                if (!timezone) {
+                    throw new Error('You did not enter a valid timezone abbreviation.');
+                }
+                timezone_offset = timezone.offset * 100;
+
                 break;
         }
 
