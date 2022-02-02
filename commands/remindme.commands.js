@@ -16,6 +16,7 @@ module.exports = {
                     option.setName('duration')
                         .setDescription('how long to wait until you are reminded')
                         .setRequired(true)
+                        .setMinValue(1)
                 )
                 .addNumberOption(option =>
                     option.setName('duration_units')
@@ -44,7 +45,7 @@ module.exports = {
         .addSubcommand(subcommand =>
             subcommand
                 .setName('date')
-                .setDescription('Schedule a reminder by date. Only schedules at most one year in advance')
+                .setDescription('Schedule a reminder by date within the next year')
                 .addNumberOption(option =>
                     option.setName('month')
                         .setDescription('Month to send a reminder in')
@@ -141,6 +142,10 @@ module.exports = {
         switch (subcommand) {
             case 'time':
                 //time from now in milliseconds to trigger reminder
+                const duration = interaction.options.getNumber('duration');
+                if (duration < 0) {
+                    throw new Error('Cannot set a negative duration');
+                }
                 const reminder_time = interaction.options.getNumber('duration') * interaction.options.getNumber('duration_units');
                 reminder_date = new Date(Date.now() + reminder_time);
                 break;
