@@ -1,6 +1,7 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { MessageEmbed, MessageActionRow, MessageButton } = require('discord.js');
 const { addReminder } = require('../handle-reminders');
+const { User } = require('../model/User');
 // const { MessageActionRow, MessageSelectMenu } = require('discord.js');
 
 module.exports = {
@@ -19,6 +20,7 @@ module.exports = {
                 .addNumberOption(option =>
                     option.setName('duration_units')
                         .setDescription('units of time for your duration')
+                        //choice values convert duration value into milliseconds
                         .setChoices([
                             [
                                 'minutes',
@@ -42,7 +44,7 @@ module.exports = {
         .addSubcommand(subcommand =>
             subcommand
                 .setName('date')
-                .setDescription('Schedule a reminder by absolute date. Only schedules at most one year in advance')
+                .setDescription('Schedule a reminder by date. Only schedules at most one year in advance')
                 .addNumberOption(option =>
                     option.setName('month')
                         .setDescription('Month to send a reminder in')
@@ -104,36 +106,59 @@ module.exports = {
                         .setMinValue(1)
                         .setMaxValue(31))
                 .addStringOption(option =>
+                    option.setName('time')
+                        .setDescription('Time to send your reminder. Format is HH:MM AM/PM (24h clock or 12h + AM/PM)')
+                        .setRequired(true))
+                .addStringOption(option =>
                     option.setName('reminder_message')
                         .setDescription('message to be sent as a reminder')
                         .setRequired(true))
-                .addStringOption(option =>
-                    option.setName('time')
-                        .setDescription('Time to send your reminder. Format is HH:MM AM/PM (24h clock or 12h + AM/PM)')
-                        .setRequired(false))
         )
     ,
     async execute(interaction) {
+        //grab text and subcommand type
         const reminder_text = interaction.options.getString('reminder_message');
-
         const subcommand = interaction.options.getSubcommand();
+
+        //actual date to set reminder
         let reminder_date;
+        //date object to be output to the user, taking timezone into account
+        let output_reminder_date;
+
+        //check if user has a timezone setting already
+        const discord_id = interaction.user.id;
+        let user = await User.findOne({ 'discord_id': discord_id });
+        let timezone_offset = 0;
+        let timezone_string = '(UTC+0:00)'
+        if (!user) {
+            console.log('user did not exist in db, no timezone setting found');
+        } else {
+            timezone_offset = user.timezone_offset;
+            timezone_string = user.timezone_string;
+        }
+
+
         switch (subcommand) {
             case 'time':
+                //time from now in milliseconds to trigger reminder
                 const reminder_time = interaction.options.getNumber('duration') * interaction.options.getNumber('duration_units');
                 reminder_date = new Date(Date.now() + reminder_time);
                 break;
 
             case 'date':
                 //input validation
-                //validate date based on month
+                //validate date based on month, validation set in the discord option asserts that 1<=date<=31
+
+                //javascript date objects count from 0 to 11 for some reason
                 const month = interaction.options.getNumber('month') - 1;
                 const date = interaction.options.getNumber('date');
-                if (month === 2) {
+                //feb
+                if (month === 1) {
                     if (date > 28) {
                         throw new Error('Feburary only has 28 days. Please enter a date between 1 and 28 (inclusive)');
                     }
-                } else if (month === 4 || month === 6 || month === 9 || month === 11) {
+                    //april, june, sept, nov
+                } else if (month === 3 || month === 5 || month === 8 || month === 10) {
                     if (date > 30) {
                         throw new Error('The month you picked only has 30 days. Please enter a date between 1 nad 30 (inclusive)');
                     }
@@ -155,6 +180,7 @@ module.exports = {
                         throw new Error('You did not enter a valid time. Time should be in the format HH:MM where HH is between 00 and 23, and MM is between 00 and 59. Alternatively, HH:MM am or HH:MM pm (case insensitive) provided HH is not greater than 12.');
                     }
                     hour = parseInt(time[1]);
+                    //arithmetic to correct for AM/PM being specified
                     if (PM) {
                         if (hour > 12) {
                             throw new Error('You cannot enter a 24 hour time (HH > 12 in HH:MM format) and AM/PM. Please only do one or the other.');
@@ -171,16 +197,17 @@ module.exports = {
                         }
                     }
                     minute = parseInt(time[2]);
-                    console.log('time' + time);
+                    // console.log('time' + time);
+                    // console.log('timeoption' + timeOption);
+                    // console.log('hour' + hour);
+                    // console.log('minute' + minute);
                 }
                 else {
                     hour = 0;
                     minute = 0;
                 }
-                console.log('timeoption' + timeOption);
-                console.log('hour' + hour);
-                console.log('minute' + minute);
-                //build date object
+
+                //build date object based on given settings
                 const now = new Date(Date.now());
                 reminder_date = new Date();
                 reminder_date.setUTCFullYear(now.getFullYear());
@@ -190,30 +217,41 @@ module.exports = {
                 reminder_date.setUTCMinutes(minute);
                 reminder_date.setUTCSeconds(0);
 
+                //correct for timezone
+                reminder_date = new Date(reminder_date.getTime() - timezone_offset * 60 * 60 * 1000);
+                // console.log('getTimezoneOffset()/60 ' + reminder_date.getTimezoneOffset() / 60);
+                // console.log('timezone_offset ' + timezone_offset);
+
+                //if date has already passed, set it for next calendar year
                 if (now > reminder_date) {
-                    reminder_date.setUTCFullYear(now.getFullYear() + 1);
+                    reminder_date.setUTCFullYear(now.getUTCFullYear() + 1);
                 }
-                console.log('reminder_date' + reminder_date);
+                // console.log('reminder_date' + reminder_date);
                 break;
         }
 
+        //reminder_date.getTimezoneOffset() + timezone_offset gives the difference between bot's local time and user's timezone
+        //this is the time that needs to be displayed to the user
+        output_reminder_date = new Date(reminder_date.getTime() + reminder_date.getTimezoneOffset() * 60000 + timezone_offset * 60 * 60 * 1000);
+        // console.log('output reminder date' + output_reminder_date);
         const date_options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        const time_string = reminder_date.toLocaleTimeString('en-US');
-        const date_string = reminder_date.toLocaleDateString('en-US', date_options);
+        const time_string = output_reminder_date.toLocaleTimeString('en-US');
+        const date_string = output_reminder_date.toLocaleDateString('en-US', date_options);
         // const datetime_string = time_string + ' on ' + date_string;
 
 
         const exampleEmbed = new MessageEmbed()
             .setColor('#0099ff')
-            .setTitle(reminder_text)
+            .setTitle('Your Reminder')
             .addFields(
-                { name: '\u200B', value: '\u200B' },
+                // { name: '\u200B', value: '\u200B' },
+                { name: 'Message', value: reminder_text },
             )
-            .setDescription('will be sent to you at the following date and time')
+            // .setDescription('will be sent to you at the following date and time')
             .addFields(
                 { name: 'Time', value: time_string, inline: true },
                 { name: 'Date', value: date_string, inline: true },
-                { name: 'Note about timezones', value: 'This command interprets the time based on the timezone you have set with /timezone, and otherwise defaults to UTC+0' }
+                { name: 'Timezone', value: timezone_string + '\n(change your timezone with /timezone)' },
             );
 
         const buttonRow = new MessageActionRow()
@@ -229,17 +267,13 @@ module.exports = {
                     .setStyle('DANGER')
             )
 
-        // const message_text = 'your reminder text is ' + reminder_text + '.'
-        //     + 'your reminder will be triggered in ' + reminder_time + 'ms,'
-        //     + ' at ' + datetime_string + '.'
-
         interaction.reply({
-            // content: message_text,
             embeds: [exampleEmbed],
             ephemeral: true,
             components: [buttonRow]
         })
             .then(() => {
+                //interact only with the same user
                 const filter = i => i.user.id === interaction.user.id;
 
                 const collector = interaction.channel.createMessageComponentCollector({ filter, max: 1, time: 15000 });
@@ -251,6 +285,7 @@ module.exports = {
                         selectedFlag = true;
                         await interaction.editReply({ components: [] });
                         await interaction.followUp({ content: 'Reminder set! See you soon.', ephemeral: true });
+                        //queue up the reminder in the DB
                         addReminder(interaction.user.id, reminder_date.getTime(), reminder_text, interaction.client);
                     } else if (i.customId === 'cancel_reminder') {
                         selectedFlag = true;
@@ -259,6 +294,7 @@ module.exports = {
                     }
                 })
 
+                //on timeout cancel and notify user
                 collector.on('end', async collected => {
                     if (!selectedFlag) {
                         await interaction.editReply({ components: [] })
