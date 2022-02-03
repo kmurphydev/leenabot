@@ -53,51 +53,51 @@ module.exports = {
                         .setChoices([
                             [
                                 'January',
-                                1
+                                0
                             ],
                             [
                                 'February',
-                                2
+                                1
                             ],
                             [
                                 'March',
-                                3
+                                2
                             ],
                             [
                                 'April',
-                                4
+                                3
                             ],
                             [
                                 'May',
-                                5
+                                4
                             ],
                             [
                                 'June',
-                                6
+                                5
                             ],
                             [
                                 'July',
-                                7
+                                6
                             ],
                             [
                                 'August',
-                                8
+                                7
                             ],
                             [
                                 'September',
-                                9
+                                8
                             ],
                             [
                                 'October',
-                                10
+                                9
                             ],
                             [
                                 'November',
-                                11
+                                10
                             ],
                             [
                                 'December',
-                                12
+                                11
                             ]
                         ]))
                 .addNumberOption(option =>
@@ -155,7 +155,7 @@ module.exports = {
                 //validate date based on month, validation set in the discord option asserts that 1<=date<=31
 
                 //javascript date objects count from 0 to 11 for some reason
-                const month = interaction.options.getNumber('month') - 1;
+                const month = interaction.options.getNumber('month');
                 const date = interaction.options.getNumber('date');
                 //feb
                 if (month === 1) {
