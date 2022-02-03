@@ -47,14 +47,14 @@ test('offset subcommand', async () => {
                 id: discord_id
             },
             reply: async (obj) => {
-                try {
-                    // console.log(obj);
-                    expect(obj.content).toBe(replyContent);
-                    expect(obj.ephemeral).toBe(true);
-                    // done();
-                } catch (e) {
-                    // done(e);
-                }
+                // try {
+                // console.log(obj);
+                expect(obj.content).toEqual(replyContent);
+                expect(obj.ephemeral).toEqual(true);
+                // done();
+                // } catch (e) {
+                // done(e);
+                // }
             }
         }
 
@@ -113,13 +113,13 @@ test('offset subcommand', async () => {
     const interaction7 = generateTestInteraction(
         'UTC+3:00',
         0,
-        'Your timezone has been set to (UTC+3:00)'
+        'Your timezone has been set to (UTC+03:00)'
     );
     await execute(interaction7);
     const interaction8 = generateTestInteraction(
         'UTC+3:00',
         1,
-        'Your timezone has been set to (UTC+3:00)'
+        'Your timezone has been set to (UTC+03:00)'
     );
     await execute(interaction8);
 
@@ -140,14 +140,14 @@ test('abbreviation command', async () => {
                 id: discord_id
             },
             reply: async (obj) => {
-                try {
-                    // console.log(obj);
-                    expect(obj.content).toBe(replyContent);
-                    expect(obj.ephemeral).toBe(true);
-                    // done();
-                } catch (e) {
-                    // done(e);
-                }
+                // try {
+                // console.log(obj);
+                expect(obj.content).toEqual(replyContent);
+                expect(obj.ephemeral).toEqual(true);
+                //     done()
+                // } catch (e) {
+                //     done(e)
+                // }
             }
         }
 
@@ -161,7 +161,7 @@ test('abbreviation command', async () => {
         0,
         'asdf'
     );
-    await expect(execute(interaction1)).rejects.toThrow(
+    expect(execute(interaction1)).rejects.toThrow(
         'You did not enter a valid timezone abbreviation'
     );
 
