@@ -272,7 +272,7 @@ module.exports = {
                     .setStyle('DANGER')
             )
 
-        interaction.reply({
+        await interaction.reply({
             embeds: [exampleEmbed],
             ephemeral: true,
             components: [buttonRow]
