@@ -160,7 +160,7 @@ module.exports = {
                 //feb
                 if (month === 1) {
                     if (date > 28) {
-                        throw new Error('Feburary only has 28 days. Please enter a date between 1 and 28 (inclusive)');
+                        throw new Error('February only has 28 days. Please enter a date between 1 and 28 (inclusive)');
                     }
                     //april, june, sept, nov
                 } else if (month === 3 || month === 5 || month === 8 || month === 10) {
