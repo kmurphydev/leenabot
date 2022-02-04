@@ -130,7 +130,7 @@ module.exports = {
         const discord_id = interaction.user.id;
         let user = await User.findOne({ 'discord_id': discord_id });
         let timezone_offset = 0;
-        let timezone_string = '(UTC+0:00)'
+        let timezone_string = '(UTC+00:00)'
         if (!user) {
             console.log('user did not exist in db, no timezone setting found');
         } else {
@@ -165,7 +165,7 @@ module.exports = {
                     //april, june, sept, nov
                 } else if (month === 3 || month === 5 || month === 8 || month === 10) {
                     if (date > 30) {
-                        throw new Error('The month you picked only has 30 days. Please enter a date between 1 nad 30 (inclusive)');
+                        throw new Error('The month you picked only has 30 days. Please enter a date between 1 and 30 (inclusive)');
                     }
                 }
 
@@ -173,44 +173,45 @@ module.exports = {
                 let hour;
                 let minute;
                 const timeOption = interaction.options.getString('time');
-                if (timeOption) {
-                    const timeRegex = /\b([01]?[0-9]|2[0-3]):([0-5][0-9])/;
-                    const PMRegex = /([Pp][Mm])\b/;
-                    const AMRegex = /([Aa][Mm])\b/;
-                    const time = timeRegex.exec(timeOption);
-                    const PM = PMRegex.exec(timeOption);
-                    const AM = AMRegex.exec(timeOption);
+                // if (timeOption) {
+                const timeRegex = /\b([01]?[0-9]|2[0-3]):([0-5][0-9])/;
+                const PMRegex = /([Pp][Mm])\b/;
+                const AMRegex = /([Aa][Mm])\b/;
+                const time = timeRegex.exec(timeOption);
+                const PM = PMRegex.exec(timeOption);
+                const AM = AMRegex.exec(timeOption);
 
-                    if (!time || time === undefined) {
-                        throw new Error('You did not enter a valid time. Time should be in the format HH:MM where HH is between 00 and 23, and MM is between 00 and 59. Alternatively, HH:MM am or HH:MM pm (case insensitive) provided HH is not greater than 12.');
-                    }
-                    hour = parseInt(time[1]);
-                    //arithmetic to correct for AM/PM being specified
-                    if (PM) {
-                        if (hour > 12) {
-                            throw new Error('You cannot enter a 24 hour time (HH > 12 in HH:MM format) and AM/PM. Please only do one or the other.');
-                        }
-                        else if (hour < 12) {
+                if (!time || time === undefined) {
+                    throw new Error('You did not enter a valid time. Time should be in the format HH:MM where HH is between 00 and 23, and MM is between 00 and 59. Alternatively, HH:MM am or HH:MM pm (case insensitive) provided HH is not greater than 12.');
+                }
+                hour = parseInt(time[1]);
+                //arithmetic to correct for AM/PM being specified
+                if ((hour > 12) && (AM || PM)) {
 
-                            hour += 12;
-                        }
-                    }
-                    //they specified AM
-                    if (AM) {
-                        if (hour === 12) {
-                            hour -= 12;
-                        }
-                    }
-                    minute = parseInt(time[2]);
-                    // console.log('time' + time);
-                    // console.log('timeoption' + timeOption);
-                    // console.log('hour' + hour);
-                    // console.log('minute' + minute);
+                    throw new Error('You cannot enter a 24 hour time (HH > 12 in HH:MM format) and AM/PM. Please only do one or the other.');
                 }
-                else {
-                    hour = 0;
-                    minute = 0;
+                if (PM) {
+                    if (hour < 12) {
+
+                        hour += 12;
+                    }
                 }
+                //they specified AM
+                if (AM) {
+                    if (hour === 12) {
+                        hour -= 12;
+                    }
+                }
+                minute = parseInt(time[2]);
+                // console.log('time' + time);
+                // console.log('timeoption' + timeOption);
+                // console.log('hour' + hour);
+                // console.log('minute' + minute);
+                // }
+                // else {
+                //     hour = 0;
+                //     minute = 0;
+                // }
 
                 //build date object based on given settings
                 const now = new Date(Date.now());
